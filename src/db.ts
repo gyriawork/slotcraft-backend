@@ -50,46 +50,6 @@ function migrate(db: Database.Database) {
     CREATE INDEX IF NOT EXISTS idx_projects_status ON projects(status);
     CREATE INDEX IF NOT EXISTS idx_projects_game_type ON projects(game_type);
 
-    CREATE TABLE IF NOT EXISTS subscriptions (
-      id TEXT PRIMARY KEY,
-      user_id TEXT NOT NULL,
-      stripe_customer_id TEXT,
-      stripe_subscription_id TEXT,
-      plan TEXT NOT NULL DEFAULT 'free' CHECK(plan IN ('free', 'pro', 'enterprise')),
-      status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active', 'past_due', 'canceled', 'trialing')),
-      trial_ends_at TEXT,
-      current_period_start TEXT,
-      current_period_end TEXT,
-      seats_included INTEGER NOT NULL DEFAULT 1,
-      seats_used INTEGER NOT NULL DEFAULT 1,
-      created_at TEXT NOT NULL,
-      updated_at TEXT NOT NULL
-    );
-
-    CREATE UNIQUE INDEX IF NOT EXISTS idx_subscriptions_user_id ON subscriptions(user_id);
-    CREATE INDEX IF NOT EXISTS idx_subscriptions_stripe_customer ON subscriptions(stripe_customer_id);
-    CREATE INDEX IF NOT EXISTS idx_subscriptions_stripe_sub ON subscriptions(stripe_subscription_id);
-
-    CREATE TABLE IF NOT EXISTS usage_records (
-      id TEXT PRIMARY KEY,
-      user_id TEXT NOT NULL,
-      period_start TEXT NOT NULL,
-      period_end TEXT NOT NULL,
-      server_sim_spins INTEGER NOT NULL DEFAULT 0,
-      browser_sim_spins INTEGER NOT NULL DEFAULT 0,
-      ai_review_calls INTEGER NOT NULL DEFAULT 0,
-      export_count INTEGER NOT NULL DEFAULT 0,
-      updated_at TEXT NOT NULL
-    );
-
-    CREATE INDEX IF NOT EXISTS idx_usage_user_period ON usage_records(user_id, period_start);
-
-    CREATE TABLE IF NOT EXISTS stripe_events (
-      event_id TEXT PRIMARY KEY,
-      event_type TEXT NOT NULL,
-      processed_at TEXT NOT NULL
-    );
-
     CREATE TABLE IF NOT EXISTS game_library (
       id TEXT PRIMARY KEY,
       project_id TEXT,
