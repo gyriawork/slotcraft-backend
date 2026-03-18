@@ -1,31 +1,19 @@
-FROM node:20-alpine AS base
-RUN corepack enable && corepack prepare pnpm@latest --activate
-
-# Install dependencies
-FROM base AS deps
+FROM node:20-alpine AS builder
 WORKDIR /app
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
-
-# Build
-FROM base AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY package.json pnpm-lock.yaml tsconfig.json ./
+COPY package.json ./
+RUN npm install
+COPY tsconfig.json ./
 COPY src/ ./src/
-RUN pnpm build
+RUN npx tsc
 
-# Seed + Run
-FROM node:20-alpine AS runner
-RUN corepack enable && corepack prepare pnpm@latest --activate
+FROM node:20-alpine
 WORKDIR /app
 ENV NODE_ENV=production
-
-COPY --from=deps /app/node_modules ./node_modules
+COPY package.json ./
+RUN npm install --omit=dev && npm install tsx
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/src ./src
-COPY package.json pnpm-lock.yaml tsconfig.json ./
+COPY src/ ./src/
+COPY tsconfig.json ./
 
-# Seed on startup (idempotent), then run server
 EXPOSE 3001
-CMD ["sh", "-c", "pnpm seed && node dist/index.js"]
+CMD ["sh", "-c", "npx tsx src/seed.ts && node dist/index.js"]
