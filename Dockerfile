@@ -10,10 +10,8 @@ FROM node:20-alpine
 WORKDIR /app
 ENV NODE_ENV=production
 COPY package.json ./
-RUN npm install --omit=dev && npm install tsx
+RUN npm install --omit=dev
 COPY --from=builder /app/dist ./dist
-COPY src/ ./src/
-COPY tsconfig.json ./
 
 EXPOSE 3001
-CMD ["sh", "-c", "npx tsx src/seed.ts && node dist/index.js"]
+CMD ["sh", "-c", "node dist/seed.js; node dist/index.js"]
