@@ -977,4 +977,44 @@ Respond with ONLY a JSON object with keys: twitter, linkedin, instagram, hashtag
   }
 });
 
+/** POST /api/ai/translate — Translate text to a target language */
+ai.post("/translate", async (c) => {
+  const body = await c.req.json<{ text: string; source_lang: string; target_lang: string }>();
+  const { text, source_lang, target_lang } = body;
+
+  if (!text?.trim() || !target_lang) {
+    return c.json({ error: "text and target_lang are required" }, 400);
+  }
+
+  const client = getClient();
+  if (!client) {
+    return c.json({
+      translated: `[${target_lang.toUpperCase()}] ${text}`,
+      source: "fallback",
+    });
+  }
+
+  try {
+    const msg = await client.messages.create({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 2000,
+      messages: [
+        {
+          role: "user",
+          content: `Translate the following game rules text from ${source_lang} to ${target_lang}. Preserve any template variables like \${variable} and %Gamename exactly as-is. Return ONLY the translated text, no explanations.\n\nText:\n${text}`,
+        },
+      ],
+    });
+    const translated = (msg.content[0] as { type: string; text: string }).text;
+    return c.json({ translated, source: "ai" });
+  } catch (err) {
+    console.error("Translation failed:", err);
+    return c.json({
+      translated: `[${target_lang.toUpperCase()}] ${text}`,
+      source: "fallback",
+      error: "AI translation failed, using placeholder",
+    });
+  }
+});
+
 export { ai };
