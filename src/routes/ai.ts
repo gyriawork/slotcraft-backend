@@ -40,8 +40,8 @@ interface ThemeIteration {
   features?: string[];
 }
 
-function getClient(): Anthropic | null {
-  const key = process.env.ANTHROPIC_API_KEY;
+function getClient(headerKey?: string | null): Anthropic | null {
+  const key = headerKey || process.env.ANTHROPIC_API_KEY;
   if (!key || key.includes("REPLACE_ME")) return null;
   return new Anthropic({ apiKey: key });
 }
@@ -55,7 +55,7 @@ ai.post("/concepts", async (c) => {
     return c.json({ error: "theme_input is required" }, 400);
   }
 
-  const client = getClient();
+  const client = getClient(c.req.header("x-anthropic-key"));
   if (!client) {
     // Fallback: return deterministic concepts when no API key
     return c.json({
@@ -120,7 +120,7 @@ ai.post("/theme-iterate", async (c) => {
     return c.json({ error: "direction and current_theme are required" }, 400);
   }
 
-  const client = getClient();
+  const client = getClient(c.req.header("x-anthropic-key"));
   if (!client) {
     return c.json({
       theme: {
@@ -206,7 +206,7 @@ ai.post("/review", async (c) => {
     8: "GDD Export (document sections and audience targeting)",
   };
 
-  const client = getClient();
+  const client = getClient(c.req.header("x-anthropic-key"));
   if (!client) {
     return c.json({
       review: generateFallbackReview(step, step_data),
@@ -268,7 +268,7 @@ ai.post("/names", async (c) => {
     return c.json({ error: "theme is required" }, 400);
   }
 
-  const client = getClient();
+  const client = getClient(c.req.header("x-anthropic-key"));
   if (!client) {
     return c.json({
       names: generateFallbackNames(body.theme, body.concept_name),
@@ -326,7 +326,7 @@ ai.post("/symbol-review", async (c) => {
     return c.json({ error: "symbols array is required" }, 400);
   }
 
-  const client = getClient();
+  const client = getClient(c.req.header("x-anthropic-key"));
 
   // Holistic mode — structured review
   if (body.holistic) {
@@ -421,7 +421,7 @@ ai.post("/saturation-check", async (c) => {
     return c.json({ error: "theme_keywords is required" }, 400);
   }
 
-  const client = getClient();
+  const client = getClient(c.req.header("x-anthropic-key"));
   if (!client) {
     return c.json({
       saturation: {
@@ -494,7 +494,7 @@ ai.post("/generate-sound-direction", async (c) => {
     max_win: "Epic orchestral crescendo with fanfare",
   };
 
-  const client = getClient();
+  const client = getClient(c.req.header("x-anthropic-key"));
   if (!client) {
     return c.json({ sounds: fallbackSounds, source: "fallback" });
   }
@@ -723,7 +723,7 @@ ai.post("/marketing-copy", async (c) => {
 
   const { game_name, game_type, theme_description, features, rtp, volatility, max_win, grid } = body;
 
-  const client = getClient();
+  const client = getClient(c.req.header("x-anthropic-key"));
   if (!client) {
     return c.json({
       short_description: `${game_name} — an exciting ${game_type} experience with ${volatility} volatility and up to ${max_win}x max win.`,
@@ -805,7 +805,7 @@ ai.post("/press-release", async (c) => {
 
   const { game_name, game_type, theme_description, features, rtp, volatility, max_win, selling_points } = body;
 
-  const client = getClient();
+  const client = getClient(c.req.header("x-anthropic-key"));
   if (!client) {
     const featureList = features?.length ? features.join(", ") : "innovative mechanics";
     return c.json({
@@ -894,7 +894,7 @@ ai.post("/social-copy", async (c) => {
 
   const { game_name, game_type, theme_description, features, rtp, volatility, max_win } = body;
 
-  const client = getClient();
+  const client = getClient(c.req.header("x-anthropic-key"));
   if (!client) {
     return c.json({
       twitter: `🎰 Introducing ${game_name}! A ${volatility || "thrilling"} ${game_type || "slot"} experience${max_win ? ` with up to ${max_win}x max win` : ""}. Play now!`,
@@ -986,7 +986,7 @@ ai.post("/translate", async (c) => {
     return c.json({ error: "text and target_lang are required" }, 400);
   }
 
-  const client = getClient();
+  const client = getClient(c.req.header("x-anthropic-key"));
   if (!client) {
     return c.json({
       translated: `[${target_lang.toUpperCase()}] ${text}`,
